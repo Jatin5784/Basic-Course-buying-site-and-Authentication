@@ -21,9 +21,16 @@ app.post('/signup',async function(req,res){
         const {username,password} = req.body;
 
         if (!username || !password) {
+            
             return res.status(400).json({ message: "Username and password are required." });
-          }
-          
+         }
+
+         
+        const existingUser = await User.findOne({username});
+        if(existingUser){
+            return res.status(400).json({message:"User with this username already exist!"});
+        }
+         
         const newUser = new User({username,password});
 
         await newUser.save();
