@@ -76,7 +76,20 @@ app.post('/newCourses', async function (req, res) {
     }
 })
 
+app.get('/Courses',async function(req,res){
 
+    try{
+        
+        const collections = await Courses.find({});
+        console.log("Collections in the database:", collections);
+        res.status(201).send(collections);
+    }
+    catch(error){
+        console.log("Error! loading courses", error);
+        res.status(400).json({message:"Some error in loading a courses"});
+    }
+
+})
 
 
 app.listen(3000);
