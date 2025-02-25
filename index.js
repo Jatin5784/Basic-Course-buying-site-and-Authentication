@@ -43,7 +43,7 @@ app.post('/signup',async function(req,res){
         const token=jwt.sign({username},JwtKey);
         console.log(token);
         
-        res.status(201).json({message:"User created Successfully",token});
+        res.status(201).json({message:"User created Successfully",token,info:"Use Bearer prefix while sending token"});
     } catch(error){
 
         console.log("Error! creating user", error);
@@ -56,8 +56,13 @@ function verifytoken(req,res,next){
     const authHeader = req.headers['authorization'];
     if(!authHeader){res.status(404).json({message:"No token provided!"})}
 
+    const parts = authHeader.split(' ');
+    if(parts.length !==2 || parts[0]!=='Bearer'){
+        res.status(401).json({message:"Token format is invalid!"})
+    }
+
     try{
-        req.user =jwt.verify(authHeader,JwtKey);
+        req.user =jwt.verify(parts[1],JwtKey);
         console.log("JWT got verified");
         next();
 
