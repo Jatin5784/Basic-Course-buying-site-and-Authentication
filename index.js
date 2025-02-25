@@ -1,13 +1,16 @@
 const express = require('express');
 const app = express();
 
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
 const User = require('./User.js');
+const Courses = require('./Courses.js');
 
-const Courses = require('./Courses.js')
+const jwt = require('jsonwebtoken');
+const JwtKey= "JatinMeena";
+
 
 mongoose.connect('mongodb+srv://Jatin:Jatin%40050208@cluster0.fwmw9.mongodb.net/')
-.then(console.log("Successfully connected to MongoDB"))
+.then(function (){console.log("Successfully connected to MongoDB")})
 .catch(function(err) {console.log("Failed to connect",err)})
 
 
@@ -37,7 +40,10 @@ app.post('/signup',async function(req,res){
 
         await newUser.save();
 
-        res.status(201).json({message:"User created Successfully"});
+        const token=jwt.sign({username},JwtKey);
+        console.log(token);
+        
+        res.status(201).json({message:"User created Successfully",token});
     } catch(error){
 
         console.log("Error! creating user", error);
@@ -46,25 +52,28 @@ app.post('/signup',async function(req,res){
     }
 });
 
+function verifytoken(req,res,next){
+    const authHeader = req.headers['authorization'];
+    if(!authHeader){res.status(404).json({message:"No token provided!"})}
 
-app.post('/newCourses', async function (req, res) {
+    try{
+        req.user =jwt.verify(authHeader,JwtKey);
+        console.log("JWT got verified");
+        next();
+
+    }
+    catch(error){
+        console.log("error in jwt",error);
+        res.send("Error in JWT!");
+    }
+
+}
+
+app.post('/newCourses',verifytoken, async function (req, res) {
     
     try{
-
-        const {username,password} = req.body;
         const {CourseName,CoursePrice} = req.body;
-
-        const existingUser = await User.findOne({username});
-        const existingUserPass = await User.findOne({password});
-        console.log(existingUser);
-        if(!existingUser){
-            return res.status(400).json({message:"Please sign up first for creating a course"});
-        }
-        if(!existingUserPass){
-            return res.status(400).json({message:"Incorrect Password!"});
-
-        }
-
+        
         const newCourse = new Courses({CourseName,CoursePrice});
         await newCourse.save();
 
@@ -82,7 +91,7 @@ app.get('/Courses',async function(req,res){
         
         const collections = await Courses.find({});
         console.log("Collections in the database:", collections);
-        res.status(201).send(collections);
+        res.status(200).send(collections);
     }
     catch(error){
         console.log("Error! loading courses", error);
@@ -90,6 +99,5 @@ app.get('/Courses',async function(req,res){
     }
 
 })
-
 
 app.listen(3000);
